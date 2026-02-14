@@ -42,8 +42,22 @@
             height: 100%;
             width: auto;
             will-change: transform;
-            /* Adjust seconds to change speed */
-            animation: sweep 40s linear infinite alternate;
+            animation-name: sweep;
+            /* Base duration will be adjusted dynamically based on image width */
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+            animation-direction: alternate;
+            animation-play-state: running;
+        }
+
+        @keyframes sweep {
+            0% {
+                transform: translateX(0%);
+            }
+
+            100% {
+                transform: translateX(calc(-100% + 100vw));
+            }
         }
 
         /* Manual pan controls */
@@ -67,16 +81,6 @@
 
         .pan-right {
             right: 18px;
-        }
-
-        @keyframes sweep {
-            0% {
-                transform: translateX(0%);
-            }
-
-            100% {
-                transform: translateX(calc(-100% + 100vw));
-            }
         }
 
         .close-btn {
@@ -193,22 +197,60 @@
 
     <div id="fullScreenViewer" class="overlay">
         <div class="pan-container">
-            <div class="pan-control pan-left" id="panLeft">&#9664;</div>
+            <div class="pan-control pan-left" id="panLeft" onclick="togglePan()">&#9664;</div>
             <img id="activePan" src="" alt="Panorama">
-            <div class="pan-control pan-right" id="panRight">&#9654;</div>
+            <div class="pan-control pan-right" id="panRight" onclick="togglePan()">&#9654;</div>
             <span class="close-btn" onclick="closeFull()">&times;</span>
         </div>
     </div>
 
     <script>
-        function openFull(preview) {
-            full = preview.replace('preview', 'full');
-            document.getElementById('activePan').src = full;
-            document.getElementById('fullScreenViewer').style.display = 'block';
+        const activePan = document.getElementById('activePan');
+        const panLeftBtn = document.getElementById('panLeft');
+        const panRightBtn = document.getElementById('panRight');
+        const fullScreenViewer = document.getElementById('fullScreenViewer');
+        const paused = { value: false };
+
+        async function openFull(preview) {
+            var fullName = preview.replace('preview', 'full');
+            activePan.src = fullName;
+            activePan.style.animationDuration = await getDuration(fullName) + 's';
+            fullScreenViewer.style.display = 'block';
+        }
+
+        async function getDuration(name) {
+            const width = await getWidth(name);
+            duration = 40 * (width / 10000);
+            console.log(`Image width: ${width}px, Animation duration: ${duration}s`);
+            return duration;
+        }
+
+        async function getWidth(name) {
+            const img = new Image();
+            img.src = name;
+            await img.decode();
+            return img.naturalWidth;
         }
 
         function closeFull() {
-            document.getElementById('fullScreenViewer').style.display = 'none';
+            fullScreenViewer.style.display = 'none';
+        }
+
+        function togglePan() {
+            if (paused.value) {
+                resumePan();
+            } else {
+                pausePan();
+            }
+            paused.value = !paused.value;
+        }
+
+        function pausePan() {
+            activePan.style.animationPlayState = 'paused';
+        }
+
+        function resumePan() {
+            activePan.style.animationPlayState = 'running';
         }
     </script>
 </body>
