@@ -42,22 +42,6 @@
             height: 100%;
             width: auto;
             will-change: transform;
-            animation-name: sweep;
-            /* Base duration will be adjusted dynamically based on image width */
-            animation-timing-function: linear;
-            animation-iteration-count: infinite;
-            animation-direction: alternate;
-            animation-play-state: running;
-        }
-
-        @keyframes sweep {
-            0% {
-                transform: translateX(0%);
-            }
-
-            100% {
-                transform: translateX(calc(-100% + 100vw));
-            }
         }
 
         /* Manual pan controls */
@@ -139,6 +123,7 @@
         <img src="./preview/20250422_102340-20250422_102411.jpg" class="pan-thumb" onclick="openFull(this.src)">
         <img src="./preview/20250410_094723-20250410_094824.jpg" class="pan-thumb" onclick="openFull(this.src)">
         <img src="./preview/20250320_102401-20250320_102451.jpg" class="pan-thumb" onclick="openFull(this.src)">
+        <img src="./preview/20250319_171808-20250319_171832.jpg" class="pan-thumb" onclick="openFull(this.src)">
         <img src="./preview/20250306_120333-20250306_120447.jpg" class="pan-thumb" onclick="openFull(this.src)">
         <img src="./preview/20250302_111912-20250302_112002.jpg" class="pan-thumb" onclick="openFull(this.src)">
         <img src="./preview/20250221_105932-20250221_110029.jpg" class="pan-thumb" onclick="openFull(this.src)">
@@ -197,9 +182,9 @@
 
     <div id="fullScreenViewer" class="overlay">
         <div class="pan-container">
-            <div class="pan-control pan-left" id="panLeft" onclick="togglePan()">&#9664;</div>
-            <img id="activePan" src="" alt="Panorama">
-            <div class="pan-control pan-right" id="panRight" onclick="togglePan()">&#9654;</div>
+            <div class="pan-control pan-left" id="panLeft" onclick="forwardLeft()">&#9664;</div>
+            <img id="activePan" src="" alt="Panorama" onclick="toggleAnimation()">
+            <div class="pan-control pan-right" id="panRight" onclick="forwardRight()">&#9654;</div>
             <span class="close-btn" onclick="closeFull()">&times;</span>
         </div>
     </div>
@@ -209,48 +194,87 @@
         const panLeftBtn = document.getElementById('panLeft');
         const panRightBtn = document.getElementById('panRight');
         const fullScreenViewer = document.getElementById('fullScreenViewer');
-        const paused = { value: false };
+        let animation = null;
+        let paused = false;
+        let duration = 0;
+        let imageDirection = 1; // 1 for right, -1 for left
+        let animationDirection = 1; // 1 for forward, -1 for reverse
 
         async function openFull(preview) {
             var fullName = preview.replace('preview', 'full');
             activePan.src = fullName;
-            activePan.style.animationDuration = await getDuration(fullName) + 's';
+            activePan.onload = () => {
+                width = activePan.naturalWidth;
+                duration = 4 * width; // The duration in ms is calculated based on the width of the panorama image, with a base factor of 40 seconds for every 10,000 pixels in width.
+                imageDirection = 1; // Start by panning to the right
+                animationDirection = 1; // Start with forward animation
+                currentAnimationTime = duration * 1000 + duration / 2; // Start in the middle of the animation
+                animation = activePan.animate(
+                    [
+                        { transform: 'translateX(0%)' },
+                        { transform: 'translateX(calc(-100% + 100vw))' }
+                    ], {
+                    duration: duration, // Use the pre-calculated duration
+                    easing: 'linear',
+                    iterations: Infinity,
+                    direction: 'alternate',
+                    fill: 'forwards',
+                    currentTime: currentAnimationTime
+                }
+                );
+                animation.pause(); // Start paused, will be unpaused when the user clicks the image
+                animation.currentTime = currentAnimationTime; // Set the initial position to the middle of the animation
+                animation.play(); // Start the animation
+                console.log(`Loaded panorama ${fullName}, width: ${width}px, animation duration: ${duration}ms`)
+            };
             fullScreenViewer.style.display = 'block';
-        }
-
-        async function getDuration(name) {
-            const width = await getWidth(name);
-            duration = 40 * (width / 10000);
-            console.log(`Image width: ${width}px, Animation duration: ${duration}s`);
-            return duration;
-        }
-
-        async function getWidth(name) {
-            const img = new Image();
-            img.src = name;
-            await img.decode();
-            return img.naturalWidth;
         }
 
         function closeFull() {
             fullScreenViewer.style.display = 'none';
         }
 
-        function togglePan() {
-            if (paused.value) {
-                resumePan();
+        function forwardRight() {
+            imageDirection = getImageDirection();
+            if (imageDirection == -1) {
+                animation.reverse();
+                animationDirection = -animationDirection; // Flip the animation direction
             } else {
-                pausePan();
+                animation.currentTime = animation.currentTime + (5000 * animationDirection); // Move right by 5 seconds
             }
-            paused.value = !paused.value;
+            unpause(); // Ensure the animation is playing after manual control
+            logAnimationState();
         }
 
-        function pausePan() {
-            activePan.style.animationPlayState = 'paused';
+        function forwardLeft() {
+            imageDirection = getImageDirection();
+            if (imageDirection == 1) {
+                animation.reverse();
+                animationDirection = -animationDirection; // Flip the animation direction
+            } else {
+                animation.currentTime = animation.currentTime + (5000 * animationDirection); // Move left by 5 seconds
+            }
+            unpause(); // Ensure the animation is playing after manual control
+            logAnimationState();
         }
 
-        function resumePan() {
-            activePan.style.animationPlayState = 'running';
+        function toggleAnimation() {
+            paused ? animation.play() : animation.pause();
+            paused = !paused;
+            logAnimationState();
+        }
+
+        function unpause() {
+            animation.play();
+            paused = false;
+        }
+
+        function getImageDirection() {
+            return (Math.trunc(animation.currentTime / duration) % 2 < 0.5 ? 1 : -1) * animationDirection;
+        }
+
+        function logAnimationState() {
+            console.log(`Animation time: ${animation.currentTime}ms, animation direction: ${animationDirection}, image direction: ${getImageDirection() == 1 ? 'right' : 'left'}, Paused: ${paused}`);
         }
     </script>
 </body>
