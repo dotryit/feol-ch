@@ -75,6 +75,11 @@
             font-size: 40px;
             cursor: pointer;
         }
+
+        html {
+            scrollbar-width: none;
+        }
+
     </style>
 </head>
 
@@ -178,6 +183,9 @@
         <img src="./preview/20150308_131523_IMG_0393-0397.jpg" class="pan-thumb" onclick="openFull(this.src)">
         <img src="./preview/20150110_151430_IMG_0082-0089.jpg" class="pan-thumb" onclick="openFull(this.src)">
         <img src="./preview/20141030_200549_IMG_3422-3417.jpg" class="pan-thumb" onclick="openFull(this.src)">
+        <img src="./preview/20130406_163637_IMG_6108-6115.jpg" class="pan-thumb" onclick="openFull(this.src)">
+        <img src="./preview/20130406_161835_IMG_6101-6106.jpg" class="pan-thumb" onclick="openFull(this.src)">
+        <img src="./preview/20130402_173438_IMG_5740-5745.jpg" class="pan-thumb" onclick="openFull(this.src)">
     </div>
 
     <div id="fullScreenViewer" class="overlay">
@@ -204,8 +212,12 @@
             var fullName = preview.replace('preview', 'full');
             activePan.src = fullName;
             activePan.onload = () => {
-                width = activePan.naturalWidth;
-                duration = 4 * width; // The duration in ms is calculated based on the width of the panorama image, with a base factor of 40 seconds for every 10,000 pixels in width.
+                imageWidth = activePan.naturalWidth; // Actual width of the image
+                imageHeight = activePan.naturalHeight; // Actual height of the image
+                panWidth = activePan.width; // Displayed width of the image
+                panHeight = activePan.height; // Displayed height of the image
+                viewerWidth = window.innerWidth; // Width of the viewport
+                duration = (panWidth - viewerWidth) * 40 / 10; // The duration in ms is calculated based on the width of the panorama image, with a base factor of 40 seconds for every 10,000 pixels in width.
                 imageDirection = 1; // Start by panning to the right
                 animationDirection = 1; // Start with forward animation
                 currentAnimationTime = duration * 1000 + duration / 2; // Start in the middle of the animation
@@ -225,7 +237,7 @@
                 animation.pause(); // Start paused, will be unpaused when the user clicks the image
                 animation.currentTime = currentAnimationTime; // Set the initial position to the middle of the animation
                 animation.play(); // Start the animation
-                console.log(`Loaded panorama ${fullName}, width: ${width}px, animation duration: ${duration}ms`)
+                console.log(`Loaded panorama ${fullName}, animation duration: ${duration.toFixed(2)}ms, image width: ${imageWidth}px, image height: ${imageHeight}px, pan width: ${panWidth}px, pan height: ${panHeight}px, viewer width: ${viewerWidth}px`);
             };
             fullScreenViewer.style.display = 'block';
         }
