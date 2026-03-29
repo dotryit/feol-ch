@@ -44,29 +44,6 @@
             will-change: transform;
         }
 
-        /* Manual pan controls */
-        .pan-control {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.4);
-            color: white;
-            padding: 10px 14px;
-            font-size: 28px;
-            border-radius: 6px;
-            cursor: pointer;
-            z-index: 1001;
-            user-select: none;
-        }
-
-        .pan-left {
-            left: 18px;
-        }
-
-        .pan-right {
-            right: 18px;
-        }
-
         .close-btn {
             position: absolute;
             top: 20px;
@@ -79,7 +56,6 @@
         html {
             scrollbar-width: none;
         }
-
     </style>
 </head>
 
@@ -190,9 +166,7 @@
 
     <div id="fullScreenViewer" class="overlay">
         <div class="pan-container">
-            <div class="pan-control pan-left" id="panLeft" onclick="forwardLeft()">&#9664;</div>
-            <img id="activePan" src="" alt="Panorama" onclick="toggleAnimation()">
-            <div class="pan-control pan-right" id="panRight" onclick="forwardRight()">&#9654;</div>
+            <img id="activePan" src="" alt="Panorama" onclick="onClickImage(event)">
             <span class="close-btn" onclick="closeFull()">&times;</span>
         </div>
     </div>
@@ -246,28 +220,57 @@
             fullScreenViewer.style.display = 'none';
         }
 
-        function forwardRight() {
-            imageDirection = getImageDirection();
-            if (imageDirection == -1) {
-                animation.reverse();
-                animationDirection = -animationDirection; // Flip the animation direction
+        function clickRight() {
+            if (paused) {
+                if (imageDirection == -1) {
+                    animation.reverse();
+                    animationDirection = -animationDirection; // Flip the animation direction
+                }
+                toggleAnimation(); // Unpause if currently paused
             } else {
-                animation.currentTime = animation.currentTime + (5000 * animationDirection); // Move right by 5 seconds
+                imageDirection = getImageDirection();
+                if (imageDirection == -1) {
+                    animation.reverse();
+                    animationDirection = -animationDirection; // Flip the animation direction
+                } else {
+                    animation.currentTime = animation.currentTime + (1000 * animationDirection); // Move right by 5 seconds
+                }
             }
             unpause(); // Ensure the animation is playing after manual control
             logAnimationState();
         }
 
-        function forwardLeft() {
-            imageDirection = getImageDirection();
-            if (imageDirection == 1) {
-                animation.reverse();
-                animationDirection = -animationDirection; // Flip the animation direction
+        function clickLeft() {
+            if (paused) {
+                if (imageDirection == 1) {
+                    animation.reverse();
+                    animationDirection = -animationDirection; // Flip the animation direction
+                }
+                toggleAnimation(); // Unpause if currently paused
             } else {
-                animation.currentTime = animation.currentTime + (5000 * animationDirection); // Move left by 5 seconds
+                imageDirection = getImageDirection();
+                if (imageDirection == 1) {
+                    animation.reverse();
+                    animationDirection = -animationDirection; // Flip the animation direction
+                } else {
+                    animation.currentTime = animation.currentTime + (1000 * animationDirection); // Move left by 5 seconds
+                }
+                unpause(); // Ensure the animation is playing after manual control
+                logAnimationState();
             }
-            unpause(); // Ensure the animation is playing after manual control
-            logAnimationState();
+        }
+
+        function onClickImage(event) {
+            const clickX = event.clientX;
+            const thirdWidth = event.view.viewerWidth / 3;
+
+            if (clickX < thirdWidth) {
+                clickLeft();
+            } else if (clickX > thirdWidth * 2) {
+                clickRight();
+            } else {
+                toggleAnimation();
+            }
         }
 
         function toggleAnimation() {
