@@ -191,7 +191,7 @@
                 panWidth = activePan.width; // Displayed width of the image
                 panHeight = activePan.height; // Displayed height of the image
                 viewerWidth = window.innerWidth; // Width of the viewport
-                duration = (panWidth - viewerWidth) * 40 / 10; // The duration in ms is calculated based on the width of the panorama image, with a base factor of 40 seconds for every 10,000 pixels in width.
+                duration = (panWidth - viewerWidth) * (2000 / panHeight) * 40 / 10; // The duration in ms is calculated based on the width of the panorama image, with a base factor of 40 seconds for every 10,000 pixels in width.
                 imageDirection = 1; // Start by panning to the right
                 animationDirection = 1; // Start with forward animation
                 currentAnimationTime = duration * 1000 + duration / 2; // Start in the middle of the animation
